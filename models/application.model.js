@@ -2,12 +2,12 @@ import mongoose from "mongoose";
 
 const applicationSchema = new mongoose.Schema(
   {
-    job: {
+    job: {                               //like job model se connect kr diya h
       type: mongoose.Schema.Types.ObjectId,
       ref: "Job",
       required: true,
     },
-    applicant: {
+    applicant: {                         //like user model se connect kr diya h
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
@@ -20,4 +20,4 @@ const applicationSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-export const Application = mongoose.Model("Application", applicationSchema);
+export const Application = mongoose.model("Application", applicationSchema);

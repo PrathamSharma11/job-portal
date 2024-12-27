@@ -1,8 +1,8 @@
 import {Company} from '../models/company.model.js';
 export const registercompany = async(req,res)=>{
-
+    // console.log(req.body);
     const {companyName} = req.body;
-    //console.log(companyName);
+    // console.log(companyName);
     if(!companyName){
         return res.status(400).json({
             message:"company name is required",
