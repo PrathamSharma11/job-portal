@@ -1,6 +1,8 @@
 import { User } from "../models/user.model.js";
 import bcrypt from 'bcryptjs';
 import jwt from "jsonwebtoken";
+import getDataUri from "../utils/datauri.js";
+import cloudinary from "../utils/cloudinary.js";
 
 export const register = async(req,res)=>{
        try {
@@ -11,7 +13,10 @@ export const register = async(req,res)=>{
                 message:'All Fields are required',
                 success:false
             });
-         }
+         };
+         const file = req.file;
+         const fileUri = getDataUri(file);
+         const cloudResponse = await cloudinary.uploader.upload(fileUri.content); 
          const user = User.findOne({email});
          if(!user){
             return res.status(400).json({
@@ -26,6 +31,9 @@ export const register = async(req,res)=>{
             phoneNumber,
             password:hashedPassword,
             role,
+            profile:{
+                profilePhoto:cloudResponse.secure_url
+            }
          });
          return res.status(201).json({
             message:"registered successfully",
@@ -69,11 +77,32 @@ export const login = async(req,res)=>{
             userId:user._id
         }
         const token = await jwt.sign(tokenData,process.env.SECRET_KEY,{expiresIn:'1d'});
+        // user = {
+        //     _id:user._id,
+        //     fullname:user.fullname,
+        //     email:user.email,
+        //     bio:user.profile.bio,
+        //     skills:user.profile.skills,
+        //     phoneNumber:user.phoneNumber,
+        //     role:user.role,
+        // }
+
         user = {
-            _id:user._id,
-            fullname:user.fullname,
-            role:user.role,
+            _id: user._id,
+            fullname: user.fullname,
+            email: user.email,
+            phoneNumber: user.phoneNumber,
+            role: user.role,
+            profile: user.profile
         }
+
+
+
+
+
+
+
+
         return res.status(200).cookie("token",token,{maxAge:1*24*60*60*1000,httpsOnly:true,sameSite:'strict'}).json({
             message:`welcome back ${user.fullname}`,
             user,
@@ -101,13 +130,17 @@ export const updateProfile = async(req,res)=>{
     try {
         const {fullname,email,phoneNumber,bio,skills} = req.body;
         const file = req.file;
+        // console.log(skills);
         
          //cloudinary
+         const fileUri = getDataUri(file);
+         const cloudResponse =  await  cloudinary.uploader.upload(fileUri.content);
 
         let skillsArray;
-        if(skillsArray){
-            const skillsArray = skills.split(",");
+        if(skills){
+            skillsArray = skills.split(",");
         }
+        // console.log(skillsArray);
 
          
          const userId = req.id; // token se
@@ -122,9 +155,19 @@ export const updateProfile = async(req,res)=>{
         if(fullname) user.fullname = fullname
         if(email) user.email = email
         if(phoneNumber) user.phoneNumber = phoneNumber
-        if(bio) user.bio = bio
-        if(skills) user.skills = skillsArray
+        if(bio) user.profile.bio = bio
+        if(skills) user.profile.skills = skillsArray
         //resume
+
+        if(cloudResponse){
+            user.profile.resume = cloudResponse.secure_url;    //save the cloudinary url
+            user.profile.resumeOriginalName = file.originalname  //save the original file name
+        }
+
+
+
+
+
         await user.save();
         user = {
             _id : user._id,
@@ -133,6 +176,7 @@ export const updateProfile = async(req,res)=>{
             phoneNumber:user.phoneNumber,
             role:user.role,
             profile : user.profile,
+
 
 
         }

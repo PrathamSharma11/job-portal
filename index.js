@@ -46,3 +46,4 @@ app.listen(PORT,()=>{
 
 //populate is like with of laravel
 //push means jab data ko dusri table min daalna h if the field is there
+//job portal by patel mernstack
